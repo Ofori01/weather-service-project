@@ -48,3 +48,7 @@ export async function getCurrentWeather(req,res,next){
     }
 }
 
+
+export async function getDailyWeather(req,res,next) {
+    
+}
