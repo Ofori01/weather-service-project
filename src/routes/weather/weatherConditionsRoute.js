@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getCurrentWeather, getDailyWeather } from "../../controllers/weather/weatherController.js";
+import { getCurrentWeather, getDailyWeather, getHourlyWeather } from "../../controllers/weather/weatherController.js";
 
 
 const router = Router()
@@ -11,7 +11,7 @@ router.get('/:location',getCurrentWeather)
 router.get("/:location/daily", getDailyWeather)
 
 //get hourly weather conditions
-router.get("/:location/hourly")
+router.get("/:location/hourly",getHourlyWeather)
 
 
 export default router
