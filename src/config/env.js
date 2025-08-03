@@ -14,7 +14,13 @@ export const config = {
 
     //weather api
     weatherApiKey : process.env.weatherApiKey,
-    currentWeatherApi: process.env.currentWeatherApi
+    currentWeatherApi: process.env.currentWeatherApi,
+
+    // redis
+    redisHost: process.env.redisHost,
+    redisUsername: process.env.redisUsername,
+    redisPassword: process.env.redisPassword,
+    redisDataExpiry: process.env.redisDataExpiry
 
 }
 
