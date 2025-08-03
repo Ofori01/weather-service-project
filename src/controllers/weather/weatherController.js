@@ -5,11 +5,7 @@ import { json } from "express";
 import { client } from "../../app.js";
 
 export async function getCurrentWeather(req, res, next) {
-
-
-
   //check if location exists
-
 
   const { location } = req.params;
 
@@ -19,18 +15,16 @@ export async function getCurrentWeather(req, res, next) {
     return next(error);
   }
 
-
   //check for cached data
   const cachedData = await client.get(`weather:current:${location}`);
 
-  if(cachedData != null){
-    console.log('serving cached data')
+  if (cachedData != null) {
+    console.log("serving cached data");
     return res.send({
       success: true,
-      data: JSON.parse(cachedData)
-    })
+      data: JSON.parse(cachedData),
+    });
   }
-
 
   if (config.currentWeatherApi) {
     try {
@@ -47,13 +41,15 @@ export async function getCurrentWeather(req, res, next) {
       );
 
       //set results in redis store
-      await client.setEx(`weather:current:${location}`,  parseInt(config.redisDataExpiry), JSON.stringify({
-        ...response.data.currentConditions,
-        resolvedAddress: response.data.resolvedAddress,
-        timestamp: new Date().toLocaleString()
-      }
-      ))
-
+      await client.setEx(
+        `weather:current:${location}`,
+        parseInt(config.redisDataExpiry),
+        JSON.stringify({
+          ...response.data.currentConditions,
+          resolvedAddress: response.data.resolvedAddress,
+          timestamp: new Date().toLocaleString(),
+        })
+      );
 
       return res.send({
         success: true,
@@ -63,7 +59,7 @@ export async function getCurrentWeather(req, res, next) {
         },
       });
     } catch (error) {
-      console.log(error)
+      console.log(error);
       return next(new Error("Error fetching weather details"));
     }
   } else {
@@ -83,7 +79,15 @@ export async function getDailyWeather(req, res, next) {
   }
 
   //check for cached data
-  const cachedData = client.get(`weather:daily:${location}`)
+  const cachedData = await client.get(`weather:daily:${location}`);
+
+  if (cachedData != null) {
+    console.log("serving cached data");
+    return res.send({
+      success: true,
+      data: JSON.parse(cachedData),
+    });
+  }
 
   if (!config.currentWeatherApi) return next(new Error(""));
 
@@ -98,18 +102,19 @@ export async function getDailyWeather(req, res, next) {
       }
     );
 
-
     //set data in redis store
-
-    await client.setEx(`weather:daily:${location}`, parseInt(config.redisDataExpiry),JSON.stringify({
-      days: response.data.days,
-      resolvedAddress: response.data.resolvedAddress
-    }))
-
-
+    await client.setEx(
+      `weather:daily:${location}`,
+      parseInt(config.redisDataExpiry),
+      JSON.stringify({
+        days: response.data.days,
+        resolvedAddress: response.data.resolvedAddress,
+        timestamp: new Date().toLocaleString(),
+      })
+    );
 
     return res.send({
-        success: true,
+      success: true,
       data: {
         days: response.data.days,
         resolvedAddress: response.data.resolvedAddress,
@@ -130,27 +135,50 @@ export async function getHourlyWeather(req, res, next) {
     next(error);
   }
 
+  //check for cached data
+  const cachedData = await client.get(`weather:hourly:${location}`);
+
+  if(cachedData !=null){
+    console.log("serving cached data")
+    return res.send({
+      success: true,
+      data: JSON.parse(cachedData)
+    })
+  }
+
   if (!config.currentWeatherApi) return next(new Error(""));
 
   try {
-    const response = await axios.get(`${config.currentWeatherApi}/${location}`, {
-      params: {
+    const response = await axios.get(
+      `${config.currentWeatherApi}/${location}`,
+      {
+        params: {
           ...weatherParams,
-          include: "hours"
+          include: "hours",
+        },
       }
-    })
-  
+    );
+
+    //set data in redis store
+    await client.setEx(
+      `weather:hourly:${location}`,
+      parseInt(config.redisDataExpiry),
+      JSON.stringify({
+        days: response.data.days,
+        resolvedAddress: response.data.resolvedAddress,
+        timestamp: new Date().toLocaleString()
+      })
+    );
+
     return res.send({
-        success: true,
-        data: {
-            days: response.data.days,
-            resolvedAddress: response.data.resolvedAddress
-        }
-        
-    })
+      success: true,
+      data: {
+        days: response.data.days,
+        resolvedAddress: response.data.resolvedAddress,
+      },
+    });
   } catch (error) {
-    console.log(error)
-    next(new Error())
-    
+    console.log(error);
+    next(new Error());
   }
 }
